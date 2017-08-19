@@ -178,11 +178,17 @@ func (t *Tpaga) setPrivateBase64() {
 // CreateCustomer create a customer in Tpaga platform
 func (t Tpaga) CreateCustomer(c Customer) (Customer, *TpagaResponseError) {
 
-	tre := t.requestPOST(c, &c, "customer", true)
+	bs, tre := t.requestPOST(c, "customer", true)
 	if tre != nil {
 		return c, tre
 	}
 
+	err := json.Unmarshal(bs, &c)
+	if err != nil {
+		tpe := TpagaError{Message: "Error al procesar el JSON" + err.Error()}
+		tre.Errors = []TpagaError{tpe}
+		return c, tre
+	}
 	return c, nil
 }
 
@@ -192,48 +198,69 @@ func (t Tpaga) CreateCustomer(c Customer) (Customer, *TpagaResponseError) {
 // Don't use this method, this method must be used
 // from your app client (Web (js) / App (Android / IOS))
 func (t *Tpaga) CreditCard(c CreditCard) (CreditCardToken, *TpagaResponseError) {
-	cct := &CreditCardToken{}
+	cct := CreditCardToken{}
 
-	tre := t.requestPOST(c, cct, "tokenize/credit_card", false)
+	bs, tre := t.requestPOST(c, "tokenize/credit_card", false)
 	if tre != nil {
-		return *cct, tre
+		return cct, tre
 	}
 
-	return *cct, nil
+	err := json.Unmarshal(bs, &cct)
+	if err != nil {
+		tpe := TpagaError{Message: "Error al procesar el JSON" + err.Error()}
+		tre.Errors = []TpagaError{tpe}
+		return cct, tre
+	}
+
+	return cct, nil
 }
 
 // AssociateCreditCard associates a tokenized credit card to the customer
 func (t *Tpaga) AssociateCreditCard(clientID, cardToken string) (CreditCardAssociated, *TpagaResponseError) {
-	cca := &CreditCardAssociated{}
+	cca := CreditCardAssociated{}
 	ccp := CreditCardPayment{
 		SkipLegalIDCheck: false,
 		Token: cardToken,
 	}
 
-	tre := t.requestPOST(ccp, cca, "customer/"+clientID+"/credit_card_token", true)
+	bs, tre := t.requestPOST(ccp, "customer/"+clientID+"/credit_card_token", true)
 	if tre != nil {
-		return *cca, tre
+		return cca, tre
 	}
 
-	return *cca, nil
+	err := json.Unmarshal(bs, &cca)
+	if err != nil {
+		tpe := TpagaError{Message: "Error al procesar el JSON" + err.Error()}
+		tre.Errors = []TpagaError{tpe}
+		return cca, tre
+	}
+
+	return cca, nil
 }
 
 // Charge create a charge to a credit card
 func (t *Tpaga) Charge(c ChargeRequest) (ResponseCharge, *TpagaResponseError) {
-	rc := &ResponseCharge{}
+	rc := ResponseCharge{}
 
-	tre := t.requestPOST(c, rc, "charge/credit_card", true)
+	bs, tre := t.requestPOST(c, "charge/credit_card", true)
 	if tre != nil {
-		return *rc, tre
+		return rc, tre
 	}
 
-	return *rc, nil
+	err := json.Unmarshal(bs, &rc)
+	if err != nil {
+		tpe := TpagaError{Message: "Error al procesar el JSON" + err.Error()}
+		tre.Errors = []TpagaError{tpe}
+		return rc, tre
+	}
+
+	return rc, nil
 }
 
 // requestPOST create a new Post Request to Tpaga platform
-func (t *Tpaga) requestPOST(data interface{}, res interface{}, url string, private bool) *TpagaResponseError {
+func (t *Tpaga) requestPOST(data interface{}, url string, private bool) ([]byte, *TpagaResponseError) {
 	var urlTpaga string
-	var tre *TpagaResponseError
+	tre := &TpagaResponseError{}
 
 	if t.isProduction {
 		urlTpaga = urlProduction
@@ -244,13 +271,13 @@ func (t *Tpaga) requestPOST(data interface{}, res interface{}, url string, priva
 	j, err := json.Marshal(data)
 	if err != nil {
 		tre.Errors = []TpagaError{TpagaError{Message: err.Error()}}
-		return tre
+		return nil, tre
 	}
 
 	req, err := http.NewRequest("POST", urlTpaga+url, bytes.NewReader(j))
 	if err != nil {
 		tre.Errors = []TpagaError{TpagaError{Message: err.Error()}}
-		return tre
+		return nil, tre
 	}
 
 	t.setPrivateBase64()
@@ -267,28 +294,23 @@ func (t *Tpaga) requestPOST(data interface{}, res interface{}, url string, priva
 	resp, err := client.Do(req)
 	if err != nil {
 		tre.Errors = []TpagaError{TpagaError{Message: err.Error()}}
-		return tre
+		return nil, tre
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		tre.Errors = []TpagaError{TpagaError{Message: err.Error()}}
-		return tre
+		return nil, tre
 	}
 
 	switch resp.StatusCode {
 	case http.StatusCreated:
-		err := json.Unmarshal(body, res)
-		if err != nil {
-			tre.Errors = []TpagaError{TpagaError{Message: err.Error()}}
-			return tre
-		}
-
-		return nil
+		return body, nil
 	case http.StatusUnauthorized:
-		tre.Errors = []TpagaError{TpagaError{Message: "No está autorizado, revise el token."}}
-		return tre
+		tpe := TpagaError{Message: "No está autorizado, revise el token."}
+		tre.Errors = []TpagaError{tpe}
+		return nil, tre
 	case http.StatusBadRequest:
 		fallthrough
 	case http.StatusUnprocessableEntity:
@@ -297,11 +319,9 @@ func (t *Tpaga) requestPOST(data interface{}, res interface{}, url string, priva
 			tre.Errors = []TpagaError{TpagaError{Message: err.Error()}}
 		}
 
-		return tre
-	default:
-		tre.Errors = []TpagaError{TpagaError{Message: "Error desconocido: " + resp.Status}}
-		return tre
+		return nil, tre
 	}
 
-	return nil
+	tre.Errors = []TpagaError{TpagaError{Message: "Error desconocido: " + resp.Status}}
+	return nil, tre
 }
