@@ -220,7 +220,7 @@ func (t *Tpaga) AssociateCreditCard(clientID, cardToken string) (CreditCardAssoc
 	cca := CreditCardAssociated{}
 	ccp := CreditCardPayment{
 		SkipLegalIDCheck: false,
-		Token: cardToken,
+		Token:            cardToken,
 	}
 
 	bs, tre := t.requestPOST(ccp, "customer/"+clientID+"/credit_card_token", true)
