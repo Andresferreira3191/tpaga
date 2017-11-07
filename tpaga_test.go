@@ -24,6 +24,7 @@ func TestTpaga_CreateCustomer(t *testing.T) {
 	c, err := tp.CreateCustomer(customer)
 	if err != nil {
 		fmt.Printf("%#v", err)
+		t.Errorf("creando un cliente en TPaga: %#v", err)
 	}
 
 	fmt.Printf("%#v", c)
@@ -47,6 +48,7 @@ func TestTpaga_CreditCard(t *testing.T) {
 	c, err := tp.CreditCard(card)
 	if err != nil {
 		fmt.Printf("%#v", err)
+		t.Errorf("tokenizando una tarjeta de crédito: %#v", err)
 	}
 
 	fmt.Printf("%#v", c)
@@ -63,6 +65,7 @@ func TestTpaga_AssociateCreditCard(t *testing.T) {
 	c, err := tp.AssociateCreditCard(client, card)
 	if err != nil {
 		fmt.Printf("%#v", err)
+		t.Errorf("asociando una tarjeta de crédito a un cliente: %#v", err)
 	}
 
 	fmt.Printf("%#v", c)
@@ -89,6 +92,7 @@ func TestTpaga_Charge(t *testing.T) {
 	c, err := tp.Charge(charge)
 	if err != nil {
 		fmt.Printf("%#v", err)
+		t.Errorf("creando un cargo a la tarjeta de crédito de un cliente: %#v", err)
 	}
 
 	fmt.Printf("%#v", c)
