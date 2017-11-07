@@ -8,11 +8,6 @@ import (
 	"net/http"
 )
 
-const (
-	urlProduction  = ""
-	urlDevelopment = "https://sandbox.tpaga.co/api/"
-)
-
 // Tpaga struct for authentication
 type Tpaga struct {
 	PublicKey        string
@@ -22,6 +17,10 @@ type Tpaga struct {
 
 	// Define if is production or development
 	isProduction bool
+
+	// Define url api TPaga
+	URLProduction  string
+	URLDevelopment string
 }
 
 // City struct for the city of the customer
@@ -263,9 +262,9 @@ func (t *Tpaga) requestPOST(data interface{}, url string, private bool) ([]byte,
 	tre := &TpagaResponseError{}
 
 	if t.isProduction {
-		urlTpaga = urlProduction
+		urlTpaga = t.URLProduction
 	} else {
-		urlTpaga = urlDevelopment
+		urlTpaga = t.URLDevelopment
 	}
 
 	j, err := json.Marshal(data)
