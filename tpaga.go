@@ -35,7 +35,7 @@ type Address struct {
 	AddressLine1 string `json:"addressLine1,omitempty"`
 	AddressLine2 string `json:"addressLine2,omitempty"`
 	PostalCode   string `json:"postalCode,omitempty"`
-	*City        `json:"city,omitempty"`
+	*City        `json:"city"`
 }
 
 // Customer struct for the customers
