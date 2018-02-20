@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -308,6 +309,10 @@ func (t *Tpaga) requestPOST(data interface{}, url string, private bool) ([]byte,
 		return body, nil
 	case http.StatusUnauthorized:
 		tpe := TpagaError{Message: "No está autorizado, revise el token."}
+		tre.Errors = []TpagaError{tpe}
+		return nil, tre
+	case http.StatusNotFound:
+		tpe := TpagaError{Message: fmt.Sprintf("Endpoint no encontrado: %s%s", urlTpaga, url)}
 		tre.Errors = []TpagaError{tpe}
 		return nil, tre
 	case http.StatusBadRequest:

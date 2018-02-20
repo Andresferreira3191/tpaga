@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	PublicKey = "i28jhne7stt5mf1vg8gf5ckknqi6q041"
+	PublicKey  = "i28jhne7stt5mf1vg8gf5ckknqi6q041"
 	PrivateKey = "eu1s29no9ktjvo8suef34m2tjp3gjg7f"
 )
 
@@ -55,10 +55,11 @@ func TestTpaga_CreditCard(t *testing.T) {
 }
 
 func TestTpaga_AssociateCreditCard(t *testing.T) {
-	client := "ee46f1779qajbtn4ds0kk1ph3f0s7vl6"
-	card := "g0us3p2r4s4pld1v76ojf18msehga3e3"
+	client := "tp8svu96dteji3fpmlb12uv1e4qk5t5p"
+	card := "9sh9rekodard5lvcbptpqp8pglss6g6l"
 
 	tp := NewV1(false)
+	tp.URLDevelopment = "https://sandbox.tpaga.co/api/"
 	tp.PublicKey = PublicKey
 	tp.PrivateKey = PrivateKey
 
